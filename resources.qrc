@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/HERE_RTTI_Archive_Miner" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
