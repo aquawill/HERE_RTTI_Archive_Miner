@@ -82,7 +82,7 @@
           <prop k="angle_dd_useexpr" v="0"/>
           <prop k="color" v="253,191,111,255"/>
           <prop k="color_dd_active" v="1"/>
-          <prop k="color_dd_expression" v="if(&quot;rtti_jam_factor&quot; > 6.66, color_rgb(255, 0, 0), if(&quot;rtti_jam_factor&quot; > 3.33, color_rgb(255, 221, 51), color_rgb(0, 255, 0)))"/>
+          <prop k="color_dd_expression" v="if(&quot;rtti_jam_factor&quot; > 6.66, color_rgb(255, 0, 0), if(&quot;rtti_jam_factor&quot; > 3.33, color_rgb(255, 221, 51), if(&quot;rtti_jam_factor&quot; > 0, color_rgb(0, 255, 0), color_rgba(255, 255, 255,0))))"/>
           <prop k="color_dd_field" v=""/>
           <prop k="color_dd_useexpr" v="1"/>
           <prop k="horizontal_anchor_point" v="1"/>
@@ -91,7 +91,7 @@
           <prop k="offset" v="0,0"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
-          <prop k="outline_color" v="0,0,0,255"/>
+          <prop k="outline_color" v="150,150,150,115"/>
           <prop k="outline_style" v="solid"/>
           <prop k="outline_width" v="0"/>
           <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
@@ -333,7 +333,7 @@
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions default="-1"/>
-  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
+  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="&quot;year&quot;" sortOrder="0">
     <columns>
       <column width="-1" hidden="0" type="field" name="year"/>
       <column width="-1" hidden="0" type="field" name="month"/>
