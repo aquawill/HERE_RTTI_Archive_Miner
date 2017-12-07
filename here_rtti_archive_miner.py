@@ -25,18 +25,17 @@ import json
 import math
 import os.path
 import sqlite3
-import threading
 
 import requests
 # Initialize Qt resources from file resources.py
-import resources
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QDateTime
+from PyQt4 import QtCore
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QProgressBar, QDockWidget
-# Import the code for the dialog
-from here_rtti_archive_miner_dialog import HERE_RTTI_Archive_MinerDialog
 from qgis.core import *
 from qgis.gui import QgsMessageBar
+
+# Import the code for the dialog
+from here_rtti_archive_miner_dialog import HERE_RTTI_Archive_MinerDialog
 
 
 def resolve(name, basepath=None):
@@ -425,8 +424,11 @@ class HERE_RTTI_Archive_Miner:
                         i, link_id, tmc_ebu_country_code, tmc_table_id, location_code, rtti_archive_db, {})
                     if len(tmc_result) > 0:
                         if tmc.find(route_direction.upper()) > 0:
-                            print(tmc_message_format.format(' --> RTTI found'))
+                            print(tmc_message_format.format(' --> RTTI retrieved'))
                             output_csv.write(tmc_output_format.format(','.join(str(elem) for elem in tmc_result[0])))
+                        else:
+                            print(
+                            tmc_message_format.format(' --> unable to retrieve RTTI, potentially illegal maneuver.'))
                     else:
                         print(tmc_message_format.format(''))
                         output_csv.write(tmc_output_format.format(''))
@@ -497,7 +499,7 @@ class HERE_RTTI_Archive_Miner:
                 print('Calling HERE RME...')
                 app_id = self.dlg.app_id_textbox.toPlainText()
                 app_code = self.dlg.app_code_textbox.toPlainText()
-                rme_url = 'http://rme.cit.api.here.com/2/matchroute.json?routemode=car&filetype={}&app_id={}&app_code={}&attributes=LINK_TMC_FC1(*),LINK_TMC_FC2(*),LINK_TMC_FC3(*),LINK_TMC_FC4(*),LINK_TMC_FC5(*)'.format(
+                rme_url = 'http://rme.cit.api.here.com/2/matchroute.json?routemode=car&access,gate,oneway,thrutraf,turn&filetype={}&app_id={}&app_code={}&attributes=LINK_TMC_FC1(*),LINK_TMC_FC2(*),LINK_TMC_FC3(*),LINK_TMC_FC4(*),LINK_TMC_FC5(*)'.format(
                     selected_layer_source_file_type, app_id, app_code)
                 payload = open(selected_layer_source_file, mode='r').read()
                 r = requests.post(rme_url, data=payload)
