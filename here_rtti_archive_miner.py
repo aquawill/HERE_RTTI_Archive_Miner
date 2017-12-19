@@ -278,7 +278,7 @@ class HERE_RTTI_Archive_Miner:
                 QgsMapLayerRegistry.instance().removeMapLayer(layer.id())
         mia = self.iface.addRasterLayer(pic_file_name, 'mia')
         order = self.iface.layerTreeCanvasBridge().customLayerOrder()
-        order.insert(3, order.pop(order.index(mia.id())))
+        order.insert(-1, order.pop(order.index(mia.id())))
         self.iface.layerTreeCanvasBridge().setCustomLayerOrder(order)
         self.iface.layerTreeCanvasBridge().setHasCustomLayerOrder(True)
 
@@ -420,6 +420,10 @@ class HERE_RTTI_Archive_Miner:
             rtti_archive_db = '{}\\{}_{}_{}_{}.sqlite'.format(self.archive_path, year, month, day, hour)
             if os.path.exists(rtti_archive_db):
                 rtti_conn = sqlite3.connect(rtti_archive_db)
+            else:
+                print('Unable to find corresponding HERE RTTI archive database.')
+                i += 1
+                continue
             if len(results[i][12]) > 0:
                 tmcs = results[i][12].split(',')
                 for tmc in tmcs:
@@ -552,6 +556,10 @@ class HERE_RTTI_Archive_Miner:
                 vlayer = QgsVectorLayer(uri, 'output_result', "delimitedtext")
                 QgsMapLayerRegistry.instance().addMapLayer(vlayer)
                 vlayer.loadNamedStyle(resolve('render_result.qml'))
+                order = self.iface.layerTreeCanvasBridge().customLayerOrder()
+                order.insert(0, order.pop(order.index(vlayer.id())))
+                self.iface.layerTreeCanvasBridge().setCustomLayerOrder(order)
+                self.iface.layerTreeCanvasBridge().setHasCustomLayerOrder(True)
                 print('Results opened.')
             else:
                 self.iface.messageBar().pushMessage("Error",
