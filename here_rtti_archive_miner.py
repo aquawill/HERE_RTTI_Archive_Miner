@@ -33,6 +33,7 @@ from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QProgressBar, QDockWidget
 from qgis.core import *
 from qgis.gui import QgsMessageBar
+from urllib.request import urlretrieve
 
 # Import the code for the dialog
 from here_rtti_archive_miner_dialog import HERE_RTTI_Archive_MinerDialog
@@ -251,6 +252,36 @@ class HERE_RTTI_Archive_Miner:
         else:
             return s
 
+    def mia_image(self, app_id, app_code):
+        map_language = 'cht'
+        mia_url = 'http://image.maps.cit.api.here.com/mia/1.6/mapview?app_id={}&app_code={}&nomrk&f=0&nocrop&t=&bbox={},{},{},{}&h={}&w={}'.format(
+            app_id, app_code, self.iface.mapCanvas().extent().yMaximum(), self.iface.mapCanvas().extent().xMaximum(),
+            self.iface.mapCanvas().extent().yMinimum(), self.iface.mapCanvas().extent().xMinimum(),
+            self.iface.mapCanvas().size().height(), self.iface.mapCanvas().size().width())
+        pic_file_name = "mia.png"
+        local_file_name, headers = urlretrieve(mia_url, pic_file_name)
+        lat_min = float(headers.get('Viewport-Bottom-Left').split(', ')[0].split(' ')[1])
+        lon_min = float(headers.get('Viewport-Bottom-Left').split(', ')[1].split(' ')[1])
+        lat_max = float(headers.get('Viewport-Top-Right').split(', ')[0].split(' ')[1])
+        lon_max = float(headers.get('Viewport-Top-Right').split(', ')[1].split(' ')[1])
+        world_file_name = pic_file_name.split('.')[0] + '.wld'
+        wld = open(world_file_name, mode='w')
+        wld.write('{}\n{}\n{}\n{}\n{}\n{}'.format(
+            format((lon_max - lon_min) / self.iface.mapCanvas().size().width(), '.32f'), 0, 0,
+            format((lat_min - lat_max) / self.iface.mapCanvas().size().height(), '.32f'), format(lon_min, '.32f'),
+            format(lat_max, '.32f')))
+        wld.close()
+        mia_existed = False
+        layers = QgsMapLayerRegistry.instance().mapLayers().values()
+        for layer in layers:
+            if layer.name() == "mia":
+                QgsMapLayerRegistry.instance().removeMapLayer(layer.id())
+        mia = self.iface.addRasterLayer(pic_file_name, 'mia')
+        order = self.iface.layerTreeCanvasBridge().customLayerOrder()
+        order.insert(3, order.pop(order.index(mia.id())))
+        self.iface.layerTreeCanvasBridge().setCustomLayerOrder(order)
+        self.iface.layerTreeCanvasBridge().setHasCustomLayerOrder(True)
+
     def rme_result_parsing(self, input_file_name, file_type, rme_result):
         conn = sqlite3.connect(input_file_name + '.sqlite')
         cursor = conn.cursor()
@@ -428,7 +459,8 @@ class HERE_RTTI_Archive_Miner:
                             output_csv.write(tmc_output_format.format(','.join(str(elem) for elem in tmc_result[0])))
                         else:
                             print(
-                            tmc_message_format.format(' --> unable to retrieve RTTI, potentially illegal maneuver.'))
+                                tmc_message_format.format(
+                                    ' --> unable to retrieve RTTI, potentially illegal maneuver.'))
                     else:
                         print(tmc_message_format.format(''))
                         output_csv.write(tmc_output_format.format(''))
@@ -489,6 +521,11 @@ class HERE_RTTI_Archive_Miner:
             self.app_code = self.dlg.app_code_textbox.toPlainText()
             self.archive_path = self.dlg.archive_textbox.toPlainText()
             selected_layer_index = self.dlg.trace_file_list.currentIndex()
+            self.mia_image(self.app_id, self.app_code)
+            def mia_autorefresh():
+                self.mia_image(self.app_id, self.app_code)
+            self.mia_image(self.app_id, self.app_code)
+            self.iface.mapCanvas().extentsChanged.connect(mia_autorefresh)
             if selected_layer_index >= 0:
                 selected_layer = layers[selected_layer_index]
                 selected_layer_source = selected_layer.source()
@@ -516,9 +553,6 @@ class HERE_RTTI_Archive_Miner:
                 QgsMapLayerRegistry.instance().addMapLayer(vlayer)
                 vlayer.loadNamedStyle(resolve('render_result.qml'))
                 print('Results opened.')
-                # inMaDeyec4Eyevupache
-                # -T00kPbHqMe2-6e94f-Grw
-                # X:\traffic_archive
             else:
                 self.iface.messageBar().pushMessage("Error",
                                                     'GPS trace is not loaded, please load GPS trace in GPX/KML/NMEA/CSV format.',
